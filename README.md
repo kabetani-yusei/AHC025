@@ -1,2 +1,2 @@
-git commit -am "READMEの変更"
-git push origin main
+#AHC025
+天秤を使っておもりを分けよう
