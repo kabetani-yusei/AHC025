@@ -1,2 +1,2 @@
-# AHC025
-AtCoder Heuristic Contest 025
+git commit -am "READMEの変更"
+git push origin main
