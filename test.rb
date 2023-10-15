@@ -3,6 +3,22 @@ N, D, Q = gets.split.map(&:to_i)
 ddd = D
 question_time = 0
 list = Array.new(D) { Array.new() }
+repeated_question = Hash.new()
+def repeated_check(ans,h,l,r)
+  s1 = "#{l.size} #{r.size} #{l.join(" ")} #{r.join(" ")}"
+  s2 = "#{r.size} #{l.size} #{r.join(" ")} #{l.join(" ")}"
+  if ans == "="
+    h[s1] = "="
+    h[s2] = "="
+  elsif ans == ">"
+    h[s1] = ">"
+    h[s2] = "<"
+  else
+    h[s1] = "<"
+    h[s2] = ">"
+  end
+  return h
+end
 
 for i in 0...N
   list[i % D] << i
@@ -16,8 +32,10 @@ for i in 1...D
 
   while (r - l) > 0
     c = (l + r) / 2
-    puts "#{list[i].size} #{list[list_sort[c]].size} #{list[i].join(" ")} #{list[list_sort[c]].join(" ")}"
+    question_content = "#{list[i].size} #{list[list_sort[c]].size} #{list[i].join(" ")} #{list[list_sort[c]].join(" ")}"
+    puts question_content
     s = gets.chomp
+    repeated_question = repeated_check(s,repeated_question,list[i],list[list_sort[c]])
     question_time += 1
 
     if s == "="
@@ -54,14 +72,30 @@ catch(:break_all) do
 
 
 
-    which = rand(20)
+    which = rand(4)
     list_copy = list.map(&:dup)
-    if which <= 0
+    if which <= 2
       # 交換
       lower_side = list[list_sort[0]][rand(list[list_sort[0]].size)]
       upper_side = list[list_sort[-1]][rand(list[list_sort[-1]].size)]
+      throw :break_all if question_time == Q
+      puts "#{1} #{1} #{lower_side} #{upper_side}"
+      s = gets.chomp
+      question_time += 1
+      next if s != "<"
+
       list[list_sort[0]].delete(lower_side)
       list[list_sort[-1]].delete(upper_side)
+
+      throw :break_all if question_time == Q
+      puts "#{list[list_sort[0]].size} #{list[list_sort[-1]].size} #{list[list_sort[0]].join(" ")} #{list[list_sort[-1]].join(" ")}"
+      s = gets.chomp
+      question_time += 1
+      if s != "<"
+        list = list_copy.map(&:dup)
+        next
+      end
+
       list[list_sort[0]] << upper_side
       list[list_sort[-1]] << lower_side
     else
@@ -108,24 +142,6 @@ catch(:break_all) do
           l = c + 1
         elsif s == "<"
           r = c
-        end
-      end
-
-      # 失敗のとき
-      if (l == 1 && ii == 0 && D != 2)
-        list = list_copy.map(&:dup)
-        break
-      end
-
-      if (l == D-1 && ii == 0 && D != 2)
-        throw :break_all if question_time == Q
-        puts "#{list[list_sort[1]].size} #{list[list_sort[D-1]].size} #{list[list_sort[1]].join(" ")} #{list[list_sort[D-1]].join(" ")}"
-        s = gets.chomp
-        question_time += 1
-
-        if s == ">"
-          list = list_copy.map(&:dup)
-          break
         end
       end
 
