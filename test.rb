@@ -72,9 +72,9 @@ catch(:break_all) do
 
 
 
-    which = rand(4)
+    which = rand(Q)
     list_copy = list.map(&:dup)
-    if which <= 2
+    if which <= question_time
       # 交換
       lower_side = list[list_sort[0]][rand(list[list_sort[0]].size)]
       upper_side = list[list_sort[-1]][rand(list[list_sort[-1]].size)]
@@ -114,6 +114,9 @@ catch(:break_all) do
       list[list_sort[0]] << upper_side
     end
 
+
+    #確定
+    list_copy = list.map(&:dup)
     # 最初のやつのcheck
     list_sort_first = list_sort[0]
     list_sort_end = list_sort[D - 1]
