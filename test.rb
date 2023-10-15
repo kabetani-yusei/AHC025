@@ -54,9 +54,9 @@ catch(:break_all) do
 
 
 
-    which = rand(0...6)
+    which = rand(20)
     list_copy = list.map(&:dup)
-    if which <= 3
+    if which <= 0
       # 交換
       lower_side = list[list_sort[0]][rand(list[list_sort[0]].size)]
       upper_side = list[list_sort[-1]][rand(list[list_sort[-1]].size)]
