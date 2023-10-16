@@ -29,7 +29,7 @@ list_copy = [[]]
 while true
     which = rand(10)
     list_copy = list.map(&:dup)
-    if which <= 9
+    if which <= 5
       # 交換
       lll = rand(D)
       rrr = rand(D)
