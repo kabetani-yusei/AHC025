@@ -63,34 +63,55 @@ end
 # 交換と譲渡を繰り返して良くしていく
 dis2flag = 0
 list_copy = [[]]
+break_time = 0
+question_time_copy = question_time
 catch(:break_all) do
   while true
     while(list[list_sort[-1]].size == 1)
       list_sort.pop
       D -= 1
     end
+    break if D == 1
+    if question_time_copy == question_time
+      break_time += 1
+      D -= 1 if break_time >= (N/D) + D
+    else
+      break_time = 0
+    end
+    question_time_copy = question_time
 
-
-
-    which = rand(Q)
+    which = rand(4)
     list_copy = list.map(&:dup)
-    if which <= question_time
+    if which <= 2
       # 交換
       lower_side = list[list_sort[0]][rand(list[list_sort[0]].size)]
       upper_side = list[list_sort[-1]][rand(list[list_sort[-1]].size)]
-      throw :break_all if question_time == Q
-      puts "#{1} #{1} #{lower_side} #{upper_side}"
-      s = gets.chomp
-      question_time += 1
+      question_content = "#{1} #{1} #{lower_side} #{upper_side}"
+      if repeated_question[question_content] == nil
+        throw :break_all if question_time == Q
+        puts question_content
+        s = gets.chomp
+        repeated_question = repeated_check(s, repeated_question, [lower_side], [upper_side])
+        question_time += 1
+      else
+        s = repeated_question[question_content]
+      end
       next if s != "<"
 
       list[list_sort[0]].delete(lower_side)
       list[list_sort[-1]].delete(upper_side)
 
-      throw :break_all if question_time == Q
-      puts "#{list[list_sort[0]].size} #{list[list_sort[-1]].size} #{list[list_sort[0]].join(" ")} #{list[list_sort[-1]].join(" ")}"
-      s = gets.chomp
-      question_time += 1
+
+      question_content = "#{list[list_sort[0]].size} #{list[list_sort[-1]].size} #{list[list_sort[0]].join(" ")} #{list[list_sort[-1]].join(" ")}"
+      if repeated_question[question_content] == nil
+        throw :break_all if question_time == Q
+        puts question_content
+        s = gets.chomp
+        question_time += 1
+        repeated_question = repeated_check(s,repeated_question,list[list_sort[0]],list[list_sort[-1]])
+      else
+        s = repeated_question[question_content]
+      end
       if s != "<"
         list = list_copy.map(&:dup)
         next
@@ -103,10 +124,16 @@ catch(:break_all) do
       upper_side = list[list_sort[-1]][rand(list[list_sort[-1]].size)]
       list[list_sort[-1]].delete(upper_side)
       # 失敗check
-      throw :break_all if question_time == Q
-      puts "#{list[list_sort[0]].size} #{list[list_sort[-1]].size} #{list[list_sort[0]].join(" ")} #{list[list_sort[-1]].join(" ")}"
-      s = gets.chomp
-      question_time += 1
+      question_content = "#{list[list_sort[0]].size} #{list[list_sort[-1]].size} #{list[list_sort[0]].join(" ")} #{list[list_sort[-1]].join(" ")}"
+      if repeated_question[question_content] == nil
+        throw :break_all if question_time == Q
+        puts question_content
+        s = gets.chomp
+        question_time += 1
+        repeated_question = repeated_check(s,repeated_question,list[list_sort[0]],list[list_sort[-1]])
+      else
+        s = repeated_question[question_content]
+      end
       if s != "<"
         list = list_copy.map(&:dup)
         next
@@ -132,10 +159,16 @@ catch(:break_all) do
       end
       while l < r
         c = (l + r) / 2
-        throw :break_all if question_time == Q
-        puts "#{list[insert].size} #{list[list_sort[c]].size} #{list[insert].join(" ")} #{list[list_sort[c]].join(" ")}"
-        s = gets.chomp
-        question_time += 1
+        question_content = "#{list[insert].size} #{list[list_sort[c]].size} #{list[insert].join(" ")} #{list[list_sort[c]].join(" ")}"
+        if repeated_question[question_content] == nil
+          throw :break_all if question_time == Q
+          puts question_content
+          s = gets.chomp
+          question_time += 1
+          repeated_question = repeated_check(s,repeated_question,list[insert],list[list_sort[c]])
+        else
+          s = repeated_question[question_content]
+        end
         if s == "=" && D == 2
           dis2flag = 1
           throw :break_all
