@@ -5,6 +5,19 @@ question_time = 0
 list = Array.new(D) { Array.new() }
 repeated_question = Hash.new()
 
+#トポロジカルソートっぽく1対1の既存質問を避ける
+#重みもつける->=なら0で、
+$up_to_down_tree = Array.new(N){Array.new(2){Array.new()}}
+$down_to_up_tree = Array.new(N){Array.new(2){Array.new()}}
+$dist = Array.new(N,0)
+def up_to_down_known_check()
+
+end
+def down_to_up_known_check()
+
+end
+
+
 def repeated_check(ans, h, l, r)
   s1 = "#{l.size} #{r.size} #{l.join(" ")} #{r.join(" ")}"
   s2 = "#{r.size} #{l.size} #{r.join(" ")} #{l.join(" ")}"
@@ -87,7 +100,7 @@ catch(:break_all) do
     end
     list_copy = list.map(&:dup)
     change_flag = 0
-    break if no_change_num == (N/D)*3
+    break if no_change_num == (N/D) * 2
 
 
 
@@ -187,6 +200,7 @@ catch(:break_all) do
         end
         if s == "=" && D == 2
           dis2flag = 1
+          list_copy = list.map(&:dup)
           throw :break_all
         elsif s == "="
           l = r = c + 1
@@ -224,14 +238,12 @@ end
 
 
 
-
-
-#一番軽いグループと一番重いグループのやり取りでよくならないとき
-list_copy = list.map(&:dup) if dis2flag == 1
 # 交換と譲渡を繰り返して良くしていく
-if D == 1
+#他がすべて1個で変えようがない場合、D=2で=になった場合が例外処理
+min_max_flag = 0
+if D == 1 || dis2flag == 1
   if question_time != Q
-    while(true)
+    while true
       break if question_time == Q
       puts "1 1 0 1"
       s = gets
@@ -241,102 +253,80 @@ if D == 1
 else
   list = list_copy.map(&:dup)
   while true
-    which = rand(2)
     list_copy = list.map(&:dup)
-    if which <= 0
-      # 交換
-      lll = rand(ddd)
-      rrr = rand(ddd)
-      next if lll == rrr
-      next if list[lll].size == 1 || list[rrr].size == 1
-      question_content = "#{list[lll].size} #{list[rrr].size} #{list[lll].join(" ")} #{list[rrr].join(" ")}"
-      if repeated_question[question_content] == nil
-        break if question_time == Q
-        puts question_content
-        s = gets.chomp
-        question_time += 1
-        repeated_question = repeated_check(s, repeated_question, list[lll], list[rrr])
-      else
-        s = repeated_question[question_content]
-      end
-      next if s == "="
-      (lll, rrr = rrr, lll) if s == ">"
-
-      lower_side = list[lll][rand(list[lll].size)]
-      upper_side = list[rrr][rand(list[rrr].size)]
-      question_content = "#{1} #{1} #{lower_side} #{upper_side}"
-      if repeated_question[question_content] == nil
-        break if question_time == Q
-        puts question_content
-        s = gets.chomp
-        repeated_question = repeated_check(s, repeated_question, [lower_side], [upper_side])
-        question_time += 1
-      else
-        s = repeated_question[question_content]
-      end
-      next if s != "<"
-
-      list[lll].delete(lower_side)
-      list[rrr].delete(upper_side)
-
-      question_content = "#{list[lll].size} #{list[rrr].size} #{list[lll].join(" ")} #{list[rrr].join(" ")}"
-      if repeated_question[question_content] == nil
-        break if question_time == Q
-        puts question_content
-        s = gets.chomp
-        question_time += 1
-        repeated_question = repeated_check(s, repeated_question, list[lll], list[rrr])
-      else
-        s = repeated_question[question_content]
-      end
-      if s != "<"
-        list = list_copy.map(&:dup)
-        next
-      end
-
-      list[lll] << upper_side
-      list[rrr] << lower_side
-    else
-      # 譲渡
-      lll = rand(ddd)
-      rrr = rand(ddd)
-      next if lll == rrr
-      next if list[lll].size == 1 && list[rrr].size == 1
-      question_content = "#{list[lll].size} #{list[rrr].size} #{list[lll].join(" ")} #{list[rrr].join(" ")}"
-      if repeated_question[question_content] == nil
-        break if question_time == Q
-        puts question_content
-        s = gets.chomp
-        question_time += 1
-        repeated_question = repeated_check(s, repeated_question, list[lll], list[rrr])
-      else
-        s = repeated_question[question_content]
-      end
-      next if s == "="
-      (lll, rrr = rrr, lll) if s == ">"
-      next if list[rrr].size == 1
-
-      upper_side = list[rrr][rand(list[rrr].size)]
-      list[rrr].delete(upper_side)
-      # 失敗check
-      question_content = "#{list[lll].size} #{list[rrr].size} #{list[lll].join(" ")} #{list[rrr].join(" ")}"
-      if repeated_question[question_content] == nil
-        break if question_time == Q
-        puts question_content
-        s = gets.chomp
-        question_time += 1
-        repeated_question = repeated_check(s, repeated_question, list[lll], list[rrr])
-      else
-        s = repeated_question[question_content]
-      end
-      if s != "<"
-        list = list_copy.map(&:dup)
-        next
-      end
-      list[lll] << upper_side
+    lll = rand(ddd)
+    rrr = rand(ddd)
+    if min_max_flag < 20
+      lll = list_sort[0]
+      rrr = list_sort[-1]
     end
+    min_max_flag += 1
+    next if lll == rrr
+    next if list[lll].size == 1 || list[rrr].size == 1
+
+    # 多対多の交換
+    lll_size = rand(1..(list[lll].size / 2))
+    rrr_size = rand(1..30)
+    if rrr_size == 1
+      rrr_size = [lll_size - 2,1].max
+    elsif rrr_size == 2
+      rrr_size = lll_size + 2
+    elsif rrr_size <= 4
+      rrr_size = [lll_size - 1,1].max
+    elsif rrr_size <= 6
+      rrr_size = lll_size + 1
+    else
+      rrr_size = lll_size
+    end
+    rrr_size = [rrr_size,list[rrr].size - 1].min
+    lll_delete_list = []
+    rrr_delete_list = []
+    while (lll_delete_list.size < lll_size)
+      lll_delete_element = list[lll][rand(list[lll].size)]
+      next if lll_delete_list.include?(lll_delete_element)
+      lll_delete_list << lll_delete_element
+    end
+    while (rrr_delete_list.size < rrr_size)
+      rrr_delete_element = list[rrr][rand(list[rrr].size)]
+      next if rrr_delete_list.include?(rrr_delete_element)
+      rrr_delete_list << rrr_delete_element
+    end
+
+    question_content = "#{lll_delete_list.size} #{rrr_delete_list.size} #{lll_delete_list.join(" ")} #{rrr_delete_list.join(" ")}"
+    if repeated_question[question_content] == nil
+      break if question_time == Q
+      puts question_content
+      s = gets.chomp
+      repeated_question = repeated_check(s, repeated_question, lll_delete_list, rrr_delete_list)
+      question_time += 1
+    else
+      s = repeated_question[question_content]
+    end
+    next if s == "="
+    first_answer = s
+    lll_delete_list.each { |del_l| list[lll].delete(del_l) }
+    rrr_delete_list.each { |del_r| list[rrr].delete(del_r) }
+
+    question_content = "#{list[lll].size} #{list[rrr].size} #{list[lll].join(" ")} #{list[rrr].join(" ")}"
+    if repeated_question[question_content] == nil
+      break if question_time == Q
+      puts question_content
+      s = gets.chomp
+      question_time += 1
+      repeated_question = repeated_check(s, repeated_question, list[lll], list[rrr])
+    else
+      s = repeated_question[question_content]
+    end
+    if s != first_answer
+      list = list_copy.map(&:dup)
+      next
+    end
+    min_max_flag = 30
+    lll_delete_list.each { |del_l| list[rrr] << del_l }
+    rrr_delete_list.each { |del_r| list[lll] << del_r }
   end
 end
+
 
 ans = []
 for i in 0...N
