@@ -33,6 +33,20 @@ while true
   next if lll == rrr
   next if list[lll].size == 1 || list[rrr].size == 1
   # 多対多の交換
+  lll_size = rand(1..(list[lll].size / 2))
+  rrr_size = rand(1..30)
+  if rrr_size == 1
+    rrr_size = [lll_size - 2,1].max
+  elsif rrr_size == 2
+    rrr_size = lll_size + 2
+  elsif rrr_size <= 4
+    rrr_size = [lll_size - 1,1].max
+  elsif rrr_size <= 6
+    rrr_size = lll_size + 1
+  else
+    rrr_size = lll_size
+  end
+  rrr_size = [rrr_size,list[rrr].size - 1].min
   lll_delete_list = []
   rrr_delete_list = []
   while (lll_delete_list.size < lll_size)
