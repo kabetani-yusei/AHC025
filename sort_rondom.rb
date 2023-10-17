@@ -88,8 +88,6 @@ change_flag = 0
 roop_num = 0
 catch(:break_all) do
   while true
-    roop_num += 1
-    break if roop_num == 10000
     list_copy = list.map(&:dup)
     while(list[list_sort[D-1]].size == 1)
       D -= 1
@@ -100,7 +98,7 @@ catch(:break_all) do
     rrr = list_sort[D-1]
     roop_num += 1
     roop_num = 0 if change_flag == 1
-    roop_rand = rand(2)
+    change_flag = 0
     if roop_num >= 100
       lll = list_sort[rand(0...(D/2))]
       rrr = list_sort[rand((D/2)...D)]
