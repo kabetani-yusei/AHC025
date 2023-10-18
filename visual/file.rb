@@ -29,6 +29,9 @@ output_file_index = -1
 #3. getsをac_check(left, right)に変える
 #4. getsの次の行 output_file[output_file_index+=1] = out_string
 def comment_out()#list_copy = listのとこに追加（譲渡のとこに追加しないように注意)
+s = ac_check(left, right)
+output_file[output_file_index+=1] = out_string
+
 ans = []
 for check_i in 0...N
   for check_j in 0...ddd
@@ -77,9 +80,9 @@ for i in 0...N
 end
 
 list_copy = [[]]
-rooproop = 0
+min_max_flag = 0
+choice_distribution = Array.new(D,1.0/D)
 while true
-  rooproop = (rooproop + 1) % D
   ans = []
   for check_i in 0...N
     for check_j in 0...D
@@ -89,72 +92,146 @@ while true
   out_string = "#c #{ans.join(" ")}"
   output_file[output_file_index+=1] = out_string
   list_copy = list.map(&:dup)
-  lll = rooproop
-  rrr = rand(D)
+  lll_value = rand
+  rrr_value = rand
+  lll_value_search = 0
+  rrr_value_search = 0
+  lll = D-1
+  rrr = D-1
+  for i in 0...D
+    lll_value_search += choice_distribution[i]
+    if lll_value_search > lll_value
+      lll = i
+      break
+    end
+  end
+  for i in 0...D
+    rrr_value_search += choice_distribution[i]
+    if rrr_value_search > rrr_value
+      rrr = i
+      break
+    end
+  end
   next if lll == rrr
-  next if list[lll].size == 1 || list[rrr].size == 1
+
+  which = rand(5)
   # 多対多の交換
-  lll_size = rand(1..(list[lll].size / 2))
-  rrr_size = rand(1..30)
-  if rrr_size == 1
-    rrr_size = [lll_size - 2,1].max
-  elsif rrr_size == 2
-    rrr_size = lll_size + 2
-  elsif rrr_size <= 4
-    rrr_size = [lll_size - 1,1].max
-  elsif rrr_size <= 6
-    rrr_size = lll_size + 1
-  else
-    rrr_size = lll_size
-  end
-  rrr_size = [rrr_size,list[rrr].size - 1].min
-  lll_delete_list = []
-  rrr_delete_list = []
-  while (lll_delete_list.size < lll_size)
-    lll_delete_element = list[lll][rand(list[lll].size)]
-    next if lll_delete_list.include?(lll_delete_element)
-    lll_delete_list << lll_delete_element
-  end
-  while (rrr_delete_list.size < rrr_size)
-    rrr_delete_element = list[rrr][rand(list[rrr].size)]
-    next if rrr_delete_list.include?(rrr_delete_element)
-    rrr_delete_list << rrr_delete_element
-  end
+  if which <= 3
+    next if list[lll].size == 1 || list[rrr].size == 1
+    lll_index_cand = Array.new(list[lll].size / 2)
+    lll_index_value = 0.2
+    lll_index_cand[0] = 1
+    for i in 1...lll_index_cand.size
+      lll_index_cand[i] = lll_index_value
+      lll_index_value *= 0.5
+    end
+    normalize = 1.0 / lll_index_cand.sum
+    lll_index_cand.map!{|nor| nor *= normalize}
+    lll_size_rand = rand
+    lll_size_search = 0
+    for i in 0...lll_index_cand.size
+      lll_size_search += lll_index_cand[i]
+      if lll_size_search > lll_size_rand
+        lll_size = i+1
+        break
+      end
+    end
 
-  question_content = "#{lll_delete_list.size} #{rrr_delete_list.size} #{lll_delete_list.join(" ")} #{rrr_delete_list.join(" ")}"
-  if repeated_question[question_content] == nil
-    break if question_time == Q
-    out_string = question_content
-    s = ac_check(lll_delete_list, rrr_delete_list)
-    output_file[output_file_index+=1] = out_string
-    repeated_question = repeated_check(s, repeated_question, lll_delete_list, rrr_delete_list)
-    question_time += 1
-  else
-    s = repeated_question[question_content]
-  end
-  next if s == "="
-  first_answer = s
-  lll_delete_list.each { |del_l| list[lll].delete(del_l) }
-  rrr_delete_list.each { |del_r| list[rrr].delete(del_r) }
 
-  question_content = "#{list[lll].size} #{list[rrr].size} #{list[lll].join(" ")} #{list[rrr].join(" ")}"
-  if repeated_question[question_content] == nil
-    break if question_time == Q
-    out_string = question_content
-    s = ac_check(list[lll], list[rrr])
-    output_file[output_file_index+=1] = out_string
-    question_time += 1
-    repeated_question = repeated_check(s, repeated_question, list[lll], list[rrr])
+    rrr_size = rand(1..30)
+    if rrr_size == 1
+      rrr_size = [lll_size - 2, 1].max
+    elsif rrr_size == 2
+      rrr_size = lll_size + 2
+    elsif rrr_size <= 4
+      rrr_size = [lll_size - 1, 1].max
+    elsif rrr_size <= 6
+      rrr_size = lll_size + 1
+    else
+      rrr_size = lll_size
+    end
+    rrr_size = [rrr_size, list[rrr].size - 1].min
+    lll_delete_list = []
+    rrr_delete_list = []
+    while (lll_delete_list.size < lll_size)
+      lll_delete_element = list[lll][rand(list[lll].size)]
+      next if lll_delete_list.include?(lll_delete_element)
+      lll_delete_list << lll_delete_element
+    end
+    while (rrr_delete_list.size < rrr_size)
+      rrr_delete_element = list[rrr][rand(list[rrr].size)]
+      next if rrr_delete_list.include?(rrr_delete_element)
+      rrr_delete_list << rrr_delete_element
+    end
+
+    question_content = "#{lll_delete_list.size} #{rrr_delete_list.size} #{lll_delete_list.join(" ")} #{rrr_delete_list.join(" ")}"
+    if repeated_question[question_content] == nil
+      break if question_time == Q
+      out_string = question_content
+      s = ac_check(lll_delete_list, rrr_delete_list)
+      output_file[output_file_index+=1] = out_string
+      repeated_question = repeated_check(s, repeated_question, lll_delete_list, rrr_delete_list)
+      question_time += 1
+    else
+      s = repeated_question[question_content]
+    end
+    next if s == "="
+    first_answer = s
+    lll_delete_list.each { |del_l| list[lll].delete(del_l) }
+    rrr_delete_list.each { |del_r| list[rrr].delete(del_r) }
+
+    question_content = "#{list[lll].size} #{list[rrr].size} #{list[lll].join(" ")} #{list[rrr].join(" ")}"
+    if repeated_question[question_content] == nil
+      break if question_time == Q
+      out_string = question_content
+      s = ac_check(list[lll], list[rrr])
+      output_file[output_file_index+=1] = out_string
+      question_time += 1
+      repeated_question = repeated_check(s, repeated_question, list[lll], list[rrr])
+    else
+      s = repeated_question[question_content]
+    end
+    if s != first_answer
+      list = list_copy.map(&:dup)
+      next
+    end
+    lll_delete_list.each { |del_l| list[rrr] << del_l }
+    rrr_delete_list.each { |del_r| list[lll] << del_r }
+    choice_distribution[lll] *= 0.9
+    choice_distribution[rrr] *= 0.9
+    normalize = 1.0 / choice_distribution.sum
+    choice_distribution.map!{|nor| nor *= normalize}
   else
-    s = repeated_question[question_content]
+    # 挿入
+    next if list[rrr].size == 1
+    upper_side = list[rrr][rand(list[rrr].size)]
+    list[rrr].delete(upper_side)
+
+    question_content = "#{list[lll].size} #{list[rrr].size} #{list[lll].join(" ")} #{list[rrr].join(" ")}"
+    if repeated_question[question_content] == nil
+      break if question_time == Q
+      out_string = question_content
+      s = ac_check(list[lll], list[rrr])
+      output_file[output_file_index+=1] = out_string
+      question_time += 1
+      repeated_question = repeated_check(s, repeated_question, list[lll], list[rrr])
+    else
+      s = repeated_question[question_content]
+    end
+    if s != "<"
+      list = list_copy.map(&:dup)
+      next
+    end
+    list[lll] << upper_side
+    choice_distribution[lll] *= 0.9
+    choice_distribution[rrr] *= 0.9
+    normalize = 1.0 / choice_distribution.sum
+    choice_distribution.map!{|nor| nor *= normalize}
   end
-  if s != first_answer
-    list = list_copy.map(&:dup)
-    next
-  end
-  lll_delete_list.each { |del_l| list[rrr] << del_l }
-  rrr_delete_list.each { |del_r| list[lll] << del_r }
 end
+
+
+
 
 ans = []
 score = Array.new(D){Array.new()}
