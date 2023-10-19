@@ -81,7 +81,6 @@ end
 
 list_copy = [[]]
 min_max_flag = 0
-choice_distribution = Array.new(D,1.0/D)
 while true
   ans = []
   for check_i in 0...N
@@ -92,65 +91,27 @@ while true
   out_string = "#c #{ans.join(" ")}"
   output_file[output_file_index+=1] = out_string
   list_copy = list.map(&:dup)
-  lll_value = rand
-  rrr_value = rand
-  lll_value_search = 0
-  rrr_value_search = 0
-  lll = D-1
-  rrr = D-1
-  for i in 0...D
-    lll_value_search += choice_distribution[i]
-    if lll_value_search > lll_value
-      lll = i
-      break
-    end
-  end
-  for i in 0...D
-    rrr_value_search += choice_distribution[i]
-    if rrr_value_search > rrr_value
-      rrr = i
-      break
-    end
-  end
+  lll = rand(D)
+  rrr = rand(D)
   next if lll == rrr
 
   which = rand(5)
   # 多対多の交換
   if which <= 3
     next if list[lll].size == 1 || list[rrr].size == 1
-    lll_index_cand = Array.new(list[lll].size / 2)
-    lll_index_value = 0.2
-    lll_index_cand[0] = 1
-    for i in 1...lll_index_cand.size
-      lll_index_cand[i] = lll_index_value
-      lll_index_value *= 0.5
-    end
-    normalize = 1.0 / lll_index_cand.sum
-    lll_index_cand.map!{|nor| nor *= normalize}
-    lll_size_rand = rand
-    lll_size_search = 0
-    for i in 0...lll_index_cand.size
-      lll_size_search += lll_index_cand[i]
-      if lll_size_search > lll_size_rand
-        lll_size = i+1
-        break
-      end
-    end
-
-
-    rrr_size = rand(1..30)
-    if rrr_size == 1
-      rrr_size = [lll_size - 2, 1].max
-    elsif rrr_size == 2
-      rrr_size = lll_size + 2
-    elsif rrr_size <= 4
-      rrr_size = [lll_size - 1, 1].max
-    elsif rrr_size <= 6
-      rrr_size = lll_size + 1
+    lll_size_rand = rand(100)
+    lll_size = 2
+    if lll_size_rand <= 4
+      lll_size = 3
+    elsif lll_size_rand <= 19
+      lll_size = 2
     else
-      rrr_size = lll_size
+      lll_size = 1
     end
+    lll_size = [lll_size, list[lll].size - 1].min
+    rrr_size = lll_size
     rrr_size = [rrr_size, list[rrr].size - 1].min
+    lll_size = rrr_size = 1 if question_time <= (Q/2)
     lll_delete_list = []
     rrr_delete_list = []
     while (lll_delete_list.size < lll_size)
@@ -197,10 +158,6 @@ while true
     end
     lll_delete_list.each { |del_l| list[rrr] << del_l }
     rrr_delete_list.each { |del_r| list[lll] << del_r }
-    choice_distribution[lll] *= 0.9
-    choice_distribution[rrr] *= 0.9
-    normalize = 1.0 / choice_distribution.sum
-    choice_distribution.map!{|nor| nor *= normalize}
   else
     # 挿入
     next if list[rrr].size == 1
@@ -223,10 +180,6 @@ while true
       next
     end
     list[lll] << upper_side
-    choice_distribution[lll] *= 0.9
-    choice_distribution[rrr] *= 0.9
-    normalize = 1.0 / choice_distribution.sum
-    choice_distribution.map!{|nor| nor *= normalize}
   end
 end
 
