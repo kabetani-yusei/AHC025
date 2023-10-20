@@ -60,6 +60,11 @@ repeated_question = Hash.new()
 $up_to_down_tree = Array.new(N){Array.new(N, -1)}
 $dist = Array.new(N,0)
 $single_known = -1
+#トポロジカルソートっぽく1対1の既存質問を避ける
+#重みもつける->=なら0で、
+$up_to_down_tree = Array.new(N){Array.new(N, -1)}
+$dist = Array.new(N,0)
+$single_known = -1
 def deeps(a,b,w,n)
   $dist[a] = 1
   if a == b
@@ -168,23 +173,27 @@ catch(:break_all) do
     end
     out_string = "#c #{ans.join(" ")}"
     output_file[output_file_index+=1] = out_string
-
     while(list[list_sort[-1]].size == 1)
       list_sort.pop
       D -= 1
     end
-    break if D == 1
     if question_time_copy == question_time
       break_time += 1
-      D -= 1 if break_time >= (N/D)
     else
       break_time = 0
     end
     question_time_copy = question_time
     break if D == 1
 
+    if break_time >= (N/D) + D
+      list_sort.pop
+      D -= 1
+    end
+    break if D == 1
+
     which = rand(4)
     list_copy = list.map(&:dup)
+    change_flag = 0
     if which <= 2
       # 交換
       next if list[list_sort[0]].size <= 1 || list[list_sort[-1]].size <= 1
@@ -192,7 +201,7 @@ catch(:break_all) do
       upper_side = list[list_sort[-1]][rand(list[list_sort[-1]].size)]
       question_content = "#{1} #{1} #{lower_side} #{upper_side}"
       single_check = single_known_check(lower_side,upper_side,N)
-      if single_check == nil
+      if single_check == nil && repeated_question[question_content] == nil
         throw :break_all if question_time == Q
         out_string = question_content
         s = ac_check([lower_side], [upper_side])
@@ -233,8 +242,6 @@ catch(:break_all) do
 
       list[list_sort[0]] << upper_side
       list[list_sort[-1]] << lower_side
-
-      change_flag = 1
     else
       # 譲渡
       upper_side = list[list_sort[-1]][rand(list[list_sort[-1]].size)]
@@ -256,13 +263,12 @@ catch(:break_all) do
         next
       end
       list[list_sort[0]] << upper_side
-
-      change_flag = 1
     end
 
 
     #確定
     list_copy = list.map(&:dup)
+    change_flag = 1
     # 最初のやつのcheck
     list_sort_first = list_sort[0]
     list_sort_end = list_sort[D - 1]
@@ -289,8 +295,9 @@ catch(:break_all) do
         else
           s = repeated_question[question_content]
         end
-        if s == "=" && D == 2
+        if s == "=" && ddd == 2
           dis2flag = 1
+          list_copy = list.map(&:dup)
           throw :break_all
         elsif s == "="
           l = r = c+1
@@ -332,18 +339,25 @@ catch(:break_all) do
   end
 end
 
-list_copy = list.map(&:dup) if dis2flag == 1
+
+
+
 if question_time != Q
   while(true)
     break if question_time == Q
     out_string = "1 1 0 1"
+    s = 1
     output_file[output_file_index+=1] = out_string
     question_time += 1
   end
 end
 
 
-
+#
+#
+#ここから下も変えない
+#
+#
 
 D = ddd
 ans = []
