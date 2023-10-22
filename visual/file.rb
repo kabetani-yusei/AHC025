@@ -1,9 +1,14 @@
 #inフォルダーにあるやつ　->　out フォルダーに変える
 score_list = Array.new(101,0)
+for HENKA in 0...20
 for file_num in 0..99
+bunsan = 0
+for sumsum in 1..5
 file_name = "%04d" % file_num
-lines = File.readlines("./in/" + file_name + ".txt")
+lines = File.readlines("./in2/" + file_name + ".txt")
 N, D, Q = lines[0].split.map &:to_i
+next if D <= 3
+ddd = D
 $AC_DATA = lines[1].split.map &:to_i
 #s = accheckみたいな感じで使う
 def ac_check(left, right)
@@ -55,11 +60,7 @@ question_time = 0
 list = Array.new(D) { Array.new() }
 repeated_question = Hash.new()
 
-#トポロジカルソートっぽく1対1の既存質問を避ける
-#重みもつける->=なら0で、
-$up_to_down_tree = Array.new(N){Array.new(N, -1)}
-$dist = Array.new(N,0)
-$single_known = -1
+
 #トポロジカルソートっぽく1対1の既存質問を避ける
 #重みもつける->=なら0で、
 $up_to_down_tree = Array.new(N){Array.new(N, -1)}
@@ -93,14 +94,14 @@ def single_known_check(a,b,n)
   deeps(b,a,0,n)
   if $single_known == 1
     return "<"
+  elsif $single_known == 0
+    return "="
   end
   return nil
 end
 
 
-
-
-def repeated_check(ans,h,l,r)
+def repeated_check(ans, h, l, r)
   s1 = "#{l.size} #{r.size} #{l.join(" ")} #{r.join(" ")}"
   s2 = "#{r.size} #{l.size} #{r.join(" ")} #{l.join(" ")}"
   if ans == "="
@@ -158,11 +159,11 @@ for i in 1...D
 end
 
 # 交換と譲渡を繰り返して良くしていく
-dis2flag = 0
 list_copy = [[]]
 change_flag = 0
 break_time = 0
-question_time_copy = question_time
+list_sort2 = [[]]
+break_time_limit = N
 catch(:break_all) do
   while true
     ans = []
@@ -173,35 +174,55 @@ catch(:break_all) do
     end
     out_string = "#c #{ans.join(" ")}"
     output_file[output_file_index+=1] = out_string
-    while(list[list_sort[-1]].size == 1)
-      list_sort.pop
+    list_sort = list_sort2.dup if change_flag == 0 && break_time > break_time_limit
+    #一番重いグループの要素が一つのとき
+    while(list[list_sort[D-1]].size == 1)
       D -= 1
+      list_sort.pop
     end
-    if question_time_copy == question_time
+    break if D == 1
+
+
+    if change_flag == 0
       break_time += 1
     else
       break_time = 0
     end
-    question_time_copy = question_time
-    break if D == 1
 
-    if break_time >= (N/D) + D
-      list_sort.pop
-      D -= 1
+
+    if break_time >= break_time_limit
+      list_sort2 = list_sort.dup
+      lr_rand = rand(2)
+      list_sort_change_index = [break_time/break_time_limit % (D-1),1].max
+      list_sort3 = list_sort.dup
+      list_sort = []
+      if lr_rand == 0
+        list_sort[0] = list_sort3[list_sort_change_index]
+        for lr_roop in 0...D
+          next if lr_roop == list_sort_change_index
+          list_sort << list_sort3[lr_roop]
+        end
+      elsif lr_rand == 1
+        list_sort_change_index = D - 1 - list_sort_change_index
+        for lr_roop in 0...D
+          next if lr_roop == list_sort_change_index
+          list_sort << list_sort3[lr_roop]
+        end
+        list_sort << list_sort3[list_sort_change_index]
+      end
     end
-    break if D == 1
-
-    which = rand(4)
+    throw :break_all if break_time >= N*10
+    which = rand(20)
     list_copy = list.map(&:dup)
     change_flag = 0
-    if which <= 2
+    if which <= HENKA
       # 交換
-      next if list[list_sort[0]].size <= 1 || list[list_sort[-1]].size <= 1
+      next if list[list_sort[0]].size <= 1 || list[list_sort[D-1]].size <= 1
       lower_side = list[list_sort[0]][rand(list[list_sort[0]].size)]
-      upper_side = list[list_sort[-1]][rand(list[list_sort[-1]].size)]
+      upper_side = list[list_sort[D-1]][rand(list[list_sort[D-1]].size)]
       question_content = "#{1} #{1} #{lower_side} #{upper_side}"
       single_check = single_known_check(lower_side,upper_side,N)
-      if single_check == nil && repeated_question[question_content] == nil
+      if single_check == nil
         throw :break_all if question_time == Q
         out_string = question_content
         s = ac_check([lower_side], [upper_side])
@@ -210,6 +231,7 @@ catch(:break_all) do
         question_time += 1
         if s == "="
           $up_to_down_tree[lower_side][upper_side] = 0
+          $up_to_down_tree[upper_side][lower_side] = 0
         elsif s == "<"
           $up_to_down_tree[upper_side][lower_side] = 1
         elsif s == ">"
@@ -221,17 +243,17 @@ catch(:break_all) do
       next if s != "<"
 
       list[list_sort[0]].delete(lower_side)
-      list[list_sort[-1]].delete(upper_side)
+      list[list_sort[D-1]].delete(upper_side)
 
 
-      question_content = "#{list[list_sort[0]].size} #{list[list_sort[-1]].size} #{list[list_sort[0]].join(" ")} #{list[list_sort[-1]].join(" ")}"
+      question_content = "#{list[list_sort[0]].size} #{list[list_sort[D-1]].size} #{list[list_sort[0]].join(" ")} #{list[list_sort[D-1]].join(" ")}"
       if repeated_question[question_content] == nil
         throw :break_all if question_time == Q
         out_string = question_content
-        s = ac_check(list[list_sort[0]], list[list_sort[-1]])
+        s = ac_check(list[list_sort[0]], list[list_sort[D-1]])
         output_file[output_file_index+=1] = out_string
         question_time += 1
-        repeated_question = repeated_check(s,repeated_question,list[list_sort[0]],list[list_sort[-1]])
+        repeated_question = repeated_check(s,repeated_question,list[list_sort[0]],list[list_sort[D-1]])
       else
         s = repeated_question[question_content]
       end
@@ -241,20 +263,20 @@ catch(:break_all) do
       end
 
       list[list_sort[0]] << upper_side
-      list[list_sort[-1]] << lower_side
+      list[list_sort[D-1]] << lower_side
     else
       # 譲渡
-      upper_side = list[list_sort[-1]][rand(list[list_sort[-1]].size)]
-      list[list_sort[-1]].delete(upper_side)
+      upper_side = list[list_sort[D-1]][rand(list[list_sort[D-1]].size)]
+      list[list_sort[D-1]].delete(upper_side)
       # 失敗check
-      question_content = "#{list[list_sort[0]].size} #{list[list_sort[-1]].size} #{list[list_sort[0]].join(" ")} #{list[list_sort[-1]].join(" ")}"
+      question_content = "#{list[list_sort[0]].size} #{list[list_sort[D-1]].size} #{list[list_sort[0]].join(" ")} #{list[list_sort[D-1]].join(" ")}"
       if repeated_question[question_content] == nil
         throw :break_all if question_time == Q
         out_string = question_content
-        s = ac_check(list[list_sort[0]], list[list_sort[-1]])
+        s = ac_check(list[list_sort[0]], list[list_sort[D-1]])
         output_file[output_file_index+=1] = out_string
         question_time += 1
-        repeated_question = repeated_check(s,repeated_question,list[list_sort[0]],list[list_sort[-1]])
+        repeated_question = repeated_check(s,repeated_question,list[list_sort[0]],list[list_sort[D-1]])
       else
         s = repeated_question[question_content]
       end
@@ -295,11 +317,7 @@ catch(:break_all) do
         else
           s = repeated_question[question_content]
         end
-        if s == "=" && ddd == 2
-          dis2flag = 1
-          list_copy = list.map(&:dup)
-          throw :break_all
-        elsif s == "="
+        if s == "="
           l = r = c+1
         elsif s == ">"
           l = c + 1
@@ -339,19 +357,12 @@ catch(:break_all) do
   end
 end
 
-
-
-
-if question_time != Q
-  while(true)
-    break if question_time == Q
-    out_string = "1 1 0 1"
-    s = 1
-    output_file[output_file_index+=1] = out_string
-    question_time += 1
-  end
+while(question_time < Q)
+  break if question_time == Q
+  out_string = "1 1 0 1"
+  output_file[output_file_index+=1] = out_string
+  question_time += 1
 end
-
 
 #
 #
@@ -370,19 +381,19 @@ for i in 0...N
 end
 
 heikin = $AC_DATA.sum / D
-bunsan = 0
 score.each{|ss_score|bunsan += (ss_score.sum-heikin)**2}
-score_list[file_num+1] = bunsan
-
-
-out_string = ans.join(" ")
-output_file[output_file_index += 1] = out_string
-file = File.open("./out/" + file_name + ".txt", "w")
-output_file.each{|dd|file.puts dd}
-file.close
 end
-
+score_list[file_num+1] = bunsan
+#out_string = ans.join(" ")
+#output_file[output_file_index += 1] = out_string
+#file = File.open("./out/" + file_name + ".txt", "w")
+#output_file.each{|dd|file.puts dd}
+#file.close
+end
+score_list[0] = 0
 score_list[0] = score_list.sum
-file = File.open("score.txt", "w")
-score_list.each{|dd|file.puts dd}
-file.close
+#file = File.open("score.txt", "w")
+#score_list.each{|dd|file.puts dd}
+#file.close
+p [HENKA,score_list[0]]
+end
