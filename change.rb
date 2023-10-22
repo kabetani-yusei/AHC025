@@ -109,34 +109,53 @@ end
 # 交換と譲渡を繰り返して良くしていく
 dis2flag = 0
 list_copy = [[]]
+list_sort_zurasi = []
 change_flag = 0
 break_time = 0
-question_time_copy = question_time
+zurasi = -1
 catch(:break_all) do
   while true
-    while(list[list_sort[-1]].size == 1)
-      list_sort.pop
+    list_sort = list_sort_zurasi.dup if change_flag == 0 && zurasi != -1
+    #一番重いグループの要素が一つのとき
+    D = ddd
+    while(list[list_sort[D-1]].size == 1)
       D -= 1
     end
+    while(list_sort.size > D)
+      list_sort.pop
+    end
     break if D == 1
-    if question_time_copy == question_time
+
+
+    if change_flag == 0
       break_time += 1
-      D -= 1 if break_time >= (N/D)
     else
       break_time = 0
     end
-    question_time_copy = question_time
-    break if D == 1
 
+    zurasi = -1
+    if break_time >= (N/D) * 4
+      D -= 1
+      list_sort_zurasi = list_sort.dup
+      delete_rand = rand(2)
+      if delete_rand == 0
+        zurasi = 0
+        list_sort.shift
+      elsif delete_rand == 1
+        zurasi = 1
+        list_sort.pop
+      end
+    end
+    break if D == 1
 
     which = rand(4)
     list_copy = list.map(&:dup)
     change_flag = 0
     if which <= 2
       # 交換
-      next if list[list_sort[0]].size <= 1 || list[list_sort[-1]].size <= 1
+      next if list[list_sort[0]].size <= 1 || list[list_sort[D-1]].size <= 1
       lower_side = list[list_sort[0]][rand(list[list_sort[0]].size)]
-      upper_side = list[list_sort[-1]][rand(list[list_sort[-1]].size)]
+      upper_side = list[list_sort[D-1]][rand(list[list_sort[D-1]].size)]
       question_content = "#{1} #{1} #{lower_side} #{upper_side}"
       single_check = single_known_check(lower_side,upper_side,N)
       if single_check == nil
@@ -147,6 +166,7 @@ catch(:break_all) do
         question_time += 1
         if s == "="
           $up_to_down_tree[lower_side][upper_side] = 0
+          $up_to_down_tree[upper_side][lower_side] = 0
         elsif s == "<"
           $up_to_down_tree[upper_side][lower_side] = 1
         elsif s == ">"
@@ -158,16 +178,16 @@ catch(:break_all) do
       next if s != "<"
 
       list[list_sort[0]].delete(lower_side)
-      list[list_sort[-1]].delete(upper_side)
+      list[list_sort[D-1]].delete(upper_side)
 
 
-      question_content = "#{list[list_sort[0]].size} #{list[list_sort[-1]].size} #{list[list_sort[0]].join(" ")} #{list[list_sort[-1]].join(" ")}"
+      question_content = "#{list[list_sort[0]].size} #{list[list_sort[D-1]].size} #{list[list_sort[0]].join(" ")} #{list[list_sort[D-1]].join(" ")}"
       if repeated_question[question_content] == nil
         throw :break_all if question_time == Q
         puts question_content
         s = gets.chomp
         question_time += 1
-        repeated_question = repeated_check(s,repeated_question,list[list_sort[0]],list[list_sort[-1]])
+        repeated_question = repeated_check(s,repeated_question,list[list_sort[0]],list[list_sort[D-1]])
       else
         s = repeated_question[question_content]
       end
@@ -177,21 +197,19 @@ catch(:break_all) do
       end
 
       list[list_sort[0]] << upper_side
-      list[list_sort[-1]] << lower_side
-
-      change_flag = 1
+      list[list_sort[D-1]] << lower_side
     else
       # 譲渡
-      upper_side = list[list_sort[-1]][rand(list[list_sort[-1]].size)]
-      list[list_sort[-1]].delete(upper_side)
+      upper_side = list[list_sort[D-1]][rand(list[list_sort[D-1]].size)]
+      list[list_sort[D-1]].delete(upper_side)
       # 失敗check
-      question_content = "#{list[list_sort[0]].size} #{list[list_sort[-1]].size} #{list[list_sort[0]].join(" ")} #{list[list_sort[-1]].join(" ")}"
+      question_content = "#{list[list_sort[0]].size} #{list[list_sort[D-1]].size} #{list[list_sort[0]].join(" ")} #{list[list_sort[D-1]].join(" ")}"
       if repeated_question[question_content] == nil
         throw :break_all if question_time == Q
         puts question_content
         s = gets.chomp
         question_time += 1
-        repeated_question = repeated_check(s,repeated_question,list[list_sort[0]],list[list_sort[-1]])
+        repeated_question = repeated_check(s,repeated_question,list[list_sort[0]],list[list_sort[D-1]])
       else
         s = repeated_question[question_content]
       end
@@ -200,16 +218,24 @@ catch(:break_all) do
         next
       end
       list[list_sort[0]] << upper_side
-
-      change_flag = 1
     end
 
 
     #確定
     list_copy = list.map(&:dup)
+    change_flag = 1
     # 最初のやつのcheck
     list_sort_first = list_sort[0]
     list_sort_end = list_sort[D - 1]
+    if zurasi == 0
+      list_sort = list_sort_zurasi.dup
+      D = list_sort.size
+      list_sort[1] = list_sort[0]
+    elsif zurasi == 1
+      list_sort = list_sort_zurasi.dup
+      D = list_sort.size
+      list_sort[D-2] = list_sort[D-1]
+    end
     [0, D-1].each do |ii|
       if ii == 0
         l = 1
@@ -232,8 +258,9 @@ catch(:break_all) do
         else
           s = repeated_question[question_content]
         end
-        if s == "=" && D == 2
+        if s == "=" && ddd == 2
           dis2flag = 1
+          list_copy = list.map(&:dup)
           throw :break_all
         elsif s == "="
           l = r = c+1
@@ -275,7 +302,9 @@ catch(:break_all) do
   end
 end
 
-list_copy = list.map(&:dup) if dis2flag == 1
+
+
+
 if question_time != Q
   while(true)
     break if question_time == Q
