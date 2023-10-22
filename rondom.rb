@@ -1,14 +1,44 @@
 $stdout.sync = true
 N, D, Q = gets.split.map(&:to_i)
+ddd = D
 question_time = 0
 list = Array.new(D) { Array.new() }
 repeated_question = Hash.new()
+def repeated_check(h,l,r)
+  h.each{|key,val|
+    ll = []
+    rr = []
+    s = key.split.map &:to_i
+    now = 0
+    for i in 0...s.size
+      if s[i] == -1
+        now = 1
+        next
+      end
+      ll << s[i] if now == 0
+      rr << s[i] if now == 1
+    end
+    if val == "="
+      if (l == ll && r == rr) || (r == ll && l == rr)
+        return "="
+      end
+    elsif val == ">" #llの方が大きい
+      if (l.size >= (ll & l).size) && (r.size <= (rr & r).size)
+        return ">"
+      elsif (r.size >= (ll & r).size) && (l.size <= (rr & l).size)
+        return "<"
+      end
+    elsif val == "<" #rrの方が大きい
+      if (l.size >= (rr & l).size) && (r.size <= (ll & r).size)
+        return ">"
+      elsif (r.size >= (rr & r).size) && (l.size <= (ll & l).size)
+        return "<"
+      end
+    end
+  }
+  return nil
+end
 
-#トポロジカルソートっぽく1対1の既存質問を避ける
-#重みもつける->=なら0で、
-$up_to_down_tree = Array.new(N){Array.new(N, -1)}
-$dist = Array.new(N,0)
-$single_known = -1
 #トポロジカルソートっぽく1対1の既存質問を避ける
 #重みもつける->=なら0で、
 $up_to_down_tree = Array.new(N){Array.new(N, -1)}
@@ -49,22 +79,6 @@ def single_known_check(a,b,n)
 end
 
 
-def repeated_check(ans, h, l, r)
-  s1 = "#{l.size} #{r.size} #{l.join(" ")} #{r.join(" ")}"
-  s2 = "#{r.size} #{l.size} #{r.join(" ")} #{l.join(" ")}"
-  if ans == "="
-    h[s1] = "="
-    h[s2] = "="
-  elsif ans == ">"
-    h[s1] = ">"
-    h[s2] = "<"
-  else
-    h[s1] = "<"
-    h[s2] = ">"
-  end
-  return h
-end
-
 for i in 0...N
   list[i % D] << i
 end
@@ -86,7 +100,7 @@ while true
 
   which = rand(5)
   # 多対多の交換
-  if which <= 3 || roop_num>N
+  if which <= 3 || roop_num > N
     next if list[lll].size == 1 || list[rrr].size == 1
     lr_rand = rand(2)
     if lr_rand == 0
@@ -117,7 +131,7 @@ while true
         break if question_time == Q
         puts question_content
         s = gets.chomp
-        repeated_question = repeated_check(s, repeated_question, lll_delete_list, rrr_delete_list)
+        repeated_question["#{lll_delete_list.join(" ")}" + " -1 " + "#{rrr_delete_list.join(" ")}"] = s
         question_time += 1
         if s == "="
           $up_to_down_tree[lll_delete_list[0]][rrr_delete_list[0]] = 0
@@ -131,14 +145,15 @@ while true
         s = single_check
       end
     else
-      if repeated_question[question_content] == nil
+      repeated_check_temp = repeated_check(repeated_question,lll_delete_list,rrr_delete_list)
+      if repeated_check_temp == nil
         break if question_time == Q
         puts question_content
         s = gets.chomp
-        repeated_question = repeated_check(s, repeated_question, lll_delete_list, rrr_delete_list)
+        repeated_question["#{lll_delete_list.join(" ")}" + " -1 " + "#{rrr_delete_list.join(" ")}"] = s
         question_time += 1
       else
-        s = repeated_question[question_content]
+        s = repeated_check_temp
       end
     end
     next if s == "="
@@ -153,7 +168,7 @@ while true
         break if question_time == Q
         puts question_content
         s = gets.chomp
-        repeated_question = repeated_check(s, repeated_question, [list[lll][0]], [list[rrr][0]])
+        repeated_question["#{list[lll].join(" ")}" + " -1 " + "#{list[rrr].join(" ")}"] = s
         question_time += 1
         if s == "="
           $up_to_down_tree[list[lll][0]][list[rrr][0]] = 0
@@ -167,14 +182,15 @@ while true
         s = single_check
       end
     else
-      if repeated_question[question_content] == nil
+      repeated_check_temp = repeated_check(repeated_question,list[lll],list[rrr])
+      if repeated_check_temp == nil
         break if question_time == Q
         puts question_content
         s = gets.chomp
-        repeated_question = repeated_check(s, repeated_question, list[lll], list[rrr])
+        repeated_question["#{list[lll].join(" ")}" + " -1 " + "#{list[rrr].join(" ")}"] = s
         question_time += 1
       else
-        s = repeated_question[question_content]
+        s = repeated_check_temp
       end
     end
     if s != first_answer
@@ -191,14 +207,15 @@ while true
     list[rrr].delete(upper_side)
 
     question_content = "#{list[lll].size} #{list[rrr].size} #{list[lll].join(" ")} #{list[rrr].join(" ")}"
-    if repeated_question[question_content] == nil
+    repeated_check_temp = repeated_check(repeated_question,list[lll],list[rrr])
+    if repeated_check_temp == nil
       break if question_time == Q
       puts question_content
       s = gets.chomp
       question_time += 1
-      repeated_question = repeated_check(s, repeated_question, list[lll], list[rrr])
+      repeated_question["#{list[lll].join(" ")}" + " -1 " + "#{list[rrr].join(" ")}"] = s
     else
-      s = repeated_question[question_content]
+      s = repeated_check_temp
     end
     if s != "<"
       list = list_copy.map(&:dup)
