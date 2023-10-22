@@ -362,6 +362,7 @@ else
         list[list_sort[D-1]] << lower_side
       else
         # 譲渡
+        next if list[list_sort[D-1]].size == 1
         upper_side = list[list_sort[D-1]][rand(list[list_sort[D-1]].size)]
         list[list_sort[D-1]].delete(upper_side)
         # 失敗check
@@ -456,6 +457,7 @@ else
   roop_num = 0
   change_flag = 0
   while true
+    break if D == 1
     list_copy = list.map(&:dup)
     lll = list_sort[rand(D)]
     rrr = list_sort[rand(D)]
@@ -597,7 +599,12 @@ else
     end
   end
 end
-
+while(Q != question_time)
+  break if question_time == Q
+  puts "1 1 0 1"
+  s = gets.chomp
+  question_time += 1
+end
   ans = []
   for i in 0...N
     for j in 0...ddd
