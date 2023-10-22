@@ -309,10 +309,10 @@ else
           list_sort << list_sort3[list_sort_change_index]
         end
       end
-      throw :break_all if break_time >= N*10 || (Q-question_time) < 10
       which = rand(20)
       list_copy = list.map(&:dup)
       change_flag = 0
+      throw :break_all if break_time >= N*10 || (Q-question_time) < 10
       if which <= 5
         # 交換
         next if list[list_sort[0]].size <= 1 || list[list_sort[D-1]].size <= 1
